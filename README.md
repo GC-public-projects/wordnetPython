@@ -97,7 +97,10 @@ except LookupError:
 	print('Wordnet multilanguage installation...')
 	nltk.download('omw-1.4')
 ```
-Once this script was run the downloaded libraries should be on linux here `/home/username/nltk_data/corpora`. The files names should be `wordnet.zip` & `omw-1.4.zip`
+Once this script was run, the downloaded libraries should be on linux here `/home/YourUsername/nltk_data/corpora` & on Windows here : `C:\Users\YourUsername\AppData\Roaming\nltk_data\corpora` The files names should be `wordnet.zip` & `omw-1.4.zip`.
+
+Then, copy the `nltk_data` in app/src/main/assets (create assets if doesn't exist). 
+We will replicate the folder structure and content into our app folder by using some functions later in our code. We will also need to add the folder created path in the nltk data path variable thanks to a python function. 
 
 
 ### Viewmodel dependencies
@@ -113,5 +116,41 @@ dependencies {
 ```
 
 # Code
+
+## Python code
+Two .py files created : 
+- 1. init_nltk_path.py 
+- 2. wn.py
+
+### 1. Init of the nltk path
+
+#### Purpose
+In order to know where nltk will fetch the wordnet data the path of nltk needs to be modified to integer the new folder created in the app that content the wordnet libraries > `nltk_data`.
+
+#### Content
+- In app/src/main/ create a folder named `python` if not present.
+- In `pyton` folder create .py file named : `init_nltk_path.py`
+``` python
+import os
+import nltk
+
+def initPath(files_dir):
+    # Add the path to NLTK's data search paths
+    if files_dir not in nltk.data.path:
+        nltk.data.path.append(files_dir)
+        print(f"Added {files_dir} to NLTK data paths.")
+    else:
+        print(f"{files_dir} is already in NLTK data paths.")
+
+
+    print(f"NLTK data directory: {nltk.data.path}")
+
+```
+
+
+### 1. call of Wordnet library
+Python function that return a Java/Kotlin `WordData` object the contents all the data needed for a specific word. the hierarchy returnd py the python code if the same than teh one of our data classes of course.
+
+
 
 

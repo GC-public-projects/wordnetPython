@@ -1,7 +1,7 @@
 import os
 import nltk
 
-print(f"Current working directory: {os.getcwd()}")
+# print(f"Current working directory: {os.getcwd()}")
 
 def initPath(files_dir):
     # Add the path to NLTK's data search paths
