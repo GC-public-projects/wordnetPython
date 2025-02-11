@@ -8,15 +8,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
-import com.example.wordnetpython.ui.theme.WordnetPythonTheme
 import java.io.File
 import java.io.FileOutputStream
 
@@ -27,7 +23,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // creation of the nltk_data folders
+        // creation of the nltk_data folder
         val nltkDataPath = File(filesDir, "nltk_data").absolutePath
         // copy of the wordnet files
         copyAssetFolder(this, "nltk_data", nltkDataPath)
@@ -89,18 +85,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = name,
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WordnetPythonTheme {
-        Greeting("Android")
-    }
-}

@@ -1,6 +1,6 @@
 package com.example.wordnetpython.dataclasses
 
-// Represents infoArrayListrmation about a single Synset
+// Represents information about a single Synset
 data class SynsetData(
     val pos: String, // Part of Speech (e.g., noun, verb)
     val gloss: String, // Definition or gloss

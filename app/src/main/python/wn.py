@@ -6,7 +6,6 @@ from java.util import ArrayList
 
 from nltk.corpus import wordnet as wn
 
-
 def getWordData(word: str, lang: str) -> WordData:
     wordData = WordData(word, lang)
     synsets = wn.synsets(word)
@@ -17,17 +16,17 @@ def getWordData(word: str, lang: str) -> WordData:
             gloss = synset.definition()
             examples = ArrayList() 
             synonyms = ArrayList()
-            antonymsSet = set() # use of set force only one iteration by word
+            antonymsSet = set() # use of set forces only one iteration by word
             antonyms = ArrayList()
             translationsSet = set()
             translations = ArrayList()
-            createPosDataFlag = False
+            createPosDataFlag = False # if new pos detected > POSData object needs to be created
 
             for example in synset.examples():
                 examples.add(example)
 
             for lemma in synset.lemmas():
-                if word != lemma.name():  # Exclude the initial word from synonyms list
+                if word != lemma.name():  # Excludes the initial word from synonyms list
                     synonyms.add(lemma.name())
                 for antonym in lemma.antonyms():
                     antonymsSet.add(antonym.name())
@@ -44,7 +43,6 @@ def getWordData(word: str, lang: str) -> WordData:
             synsetData = SynsetData(pos, gloss, examples, synonyms, translations, antonyms)
 
             if wordData.getPosDataList().size() == 0:
-                print("flag becomes true")
                 createPosDataFlag = True
             else:
                 for i in range(wordData.getPosDataList().size()):
@@ -55,11 +53,10 @@ def getWordData(word: str, lang: str) -> WordData:
                         createPosDataFlag = False
                         break
 
-            if createPosDataFlag:
+            if createPosDataFlag: 
                 myPosData = POSData(synsetData.getPos())
                 myPosData.getSynsets().add(synsetData)
                 wordData.getPosDataList().add(myPosData)
-                print(f"myPosData = { myPosData }") 
                 createPosDataFlag = False
 
         for i in range(wordData.getPosDataList().size()):
