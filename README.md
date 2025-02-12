@@ -1,7 +1,9 @@
 # wordnetPython
-use of Python version of Wordnet & Multilingual Wordnet (OMW) in a Jetpack compose app thanks to Chaquopy
+use of Python version of Wordnet & Multilingual Wordnet (OMW) in a Jetpack compose app thanks to Chaquopy.
 
-### Project status : Workable, doc in progress...
+`Chaquopy` is a convenient way to integer Python code in Java or Kotlin Android projects
+
+### Project status : Workable, doc completed
 
 ## target audience
 This project is for Jetpack Compose initiated user
@@ -368,11 +370,304 @@ Represents the information about a single Synset, following the pos attribute it
 #### Content
 inside package `dataclasses` create kotlin Data class named `SynsetData`
 ``` kotlin
-    val pos: String, // Part of Speech
-) {
-    var lemma: String = "" // original form of the word
-    var synsets: MutableList<SynsetData> = mutableListOf()
-}
+data class SynsetData(
+    val pos: String, // Part of Speech (e.g., noun, verb)
+    val gloss: String, // Definition or gloss
+    var examples: MutableList<String>, // examples between quotes
+    var synonyms: MutableList<String>, // Words in the synset
+    var translations: MutableList<String>,
+    var antonyms: MutableList<String>
+)
 ```
 
 ## MyViewModel (class)
+viewModel linked to the `MainScreen` composable
+
+### Purpose
+call the function `getWordData` in the module related to wn.ph and store the result in `_myWordData`. 
+
+### Content
+in Main pacage create Kotlin class named `MyViewModel`
+``` kotlin
+class MyViewModel(
+    private val _wnModule: PyObject
+): ViewModel() {
+    companion object {
+        fun provideFactory(
+            _wnModule: PyObject
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+            ): T {
+                if (modelClass.isAssignableFrom(MyViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return MyViewModel(_wnModule) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    }
+
+    private val _myWordData = MutableStateFlow<WordData?>(null)
+    val myWordData: StateFlow<WordData?> = _myWordData
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+
+    fun setWordData(word: String, lang: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+
+            val pyObject = _wnModule.callAttr("getWordData", word, lang)
+            _myWordData.value = pyObject.toJava(WordData::class.java)
+
+            _isLoading.value = false
+        }
+    }
+}
+```
+
+### Components explanations
+
+- The static `provideFactory` function return a ViewModelProvider.Factory singleton in order to pass the module related to wn.py as param during the instanciation of the viewModel.
+
+- `_myWordData` is of type MutableStateFlow in order to recomose the UI once it is updated.
+
+- `_isLoading` is update when `_myWordData` is assigned the new object in order to stop the display of the progression circle and show the word date in the UI.
+
+
+## SynsetCard (Composable)
+Composable that shows the content of a synset in a structured manner. It is call for each synset in each POSData.
+
+### Content
+In main package create Kotlin File named `SynsetCard `
+``` kotlin
+@Composable
+fun SynsetCard(
+    num: Int,
+    gloss: String,
+    examples: List<String>,
+    synonyms: List<String>,
+    lang: String?,
+    translations: List<String>,
+    antonyms: List<String>
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(5.dp)
+    ) {
+        Row {
+            Text(
+                text = "$num",
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 30.sp,
+                    color = Color.Magenta
+                ),
+                modifier = Modifier.padding(15.dp)
+            )
+            Column(
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    "Gloss",
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.DarkGray
+                    ),
+                    modifier = Modifier.padding(5.dp)
+                )
+                Text(
+                    text = gloss,
+                    modifier = Modifier.padding(10.dp, 0.dp, 10.dp, 5.dp)
+                )
+                Text(
+                    "Examples",
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.DarkGray
+                    ),
+                    modifier = Modifier.padding(5.dp)
+                )
+                Text(
+                    text = examples.joinToString().ifEmpty { "/" },
+                    modifier = Modifier.padding(10.dp, 0.dp, 10.dp, 5.dp)
+                )
+                Text(
+                    "Synonyms",
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.DarkGray),
+                    modifier = Modifier.padding(5.dp)
+                )
+                Text(
+                    text = synonyms.joinToString().ifEmpty { "/" },
+                    modifier = Modifier.padding(10.dp, 0.dp, 5.dp, 5.dp)
+                )
+                if(lang != "") {
+                    Text(
+                        "Translations in $lang",
+                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.DarkGray),
+                        modifier = Modifier.padding(5.dp)
+                    )
+                }
+                Text(
+                    text = translations.joinToString().ifEmpty { "/" },
+                    modifier = Modifier.padding(10.dp, 0.dp, 5.dp, 5.dp)
+                )
+                Text(
+                    "Antonyms",
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.DarkGray),
+                    modifier = Modifier.padding(5.dp)
+                )
+                Text(
+                    text = antonyms.joinToString().ifEmpty { "/" },
+                    modifier = Modifier.padding(10.dp, 0.dp, 5.dp, 5.dp)
+                )
+            }
+        }
+    }
+}
+```
+
+## MainScreen (Composable)
+The Main UI. 2 textfields to capture the word and the language translation and one button to load the data fetching. SynsetCard is called for each Synset in each POSData in order to show the data of the word once it is completely loaded.
+
+### Content
+in main package create Kotlin file named `MainScreen`
+``` kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(
+    wnModule: PyObject
+) {
+    val viewModel: MyViewModel = viewModel(
+        factory = MyViewModel.provideFactory(wnModule)
+    )
+
+    var myWord by remember { mutableStateOf("") }
+    val modifyMyWord = { word: String -> myWord = word }
+
+    var myLang by remember { mutableStateOf("") }
+    val modifyMyLang = { word: String -> myLang = word }
+
+    val languages = listOf(
+        "als", "arb", "bul", "cat", "cmn", "dan", "ell", "eng", "eus", "fas", "fin", "fra",
+        "glg", "heb", "hin", "hrv", "ind", "ita", "jpn", "nld", "nno", "nob", "pol", "por",
+        "ron", "slk", "slv", "spa", "swe", "tha", "zsm"
+    )
+    var expanded by remember { mutableStateOf(false) }
+
+
+    val myWordData by viewModel.myWordData.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(0.dp, 50.dp, 0.dp,0.dp)
+    ) {
+        OutlinedTextField(
+            value = myWord,
+            onValueChange = { modifyMyWord(it) },
+            label = { Text("word") },
+            placeholder = { Text("Type a word") },
+            singleLine = true,
+            modifier = Modifier
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                modifier = Modifier.menuAnchor(),
+                value = myLang,
+                onValueChange = { expanded = true },
+                label = { Text("translation language") },
+                singleLine = true,
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                languages.forEach { lang ->
+                    DropdownMenuItem(
+                        text = { Text(lang) },
+                        onClick = {
+                            modifyMyLang(lang)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Button(onClick = { viewModel.setWordData(myWord, myLang) }) {
+            Text("show word data")
+        }
+        if (
+            myWordData != null &&
+            myWordData!!.posDataList.isNotEmpty() &&
+            !isLoading
+        ) {
+            Column {
+                var synsetNumber = 1
+                Text(
+                    text = "Word: ${myWordData!!.word}",
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 35.sp,
+                        color = Color.Gray
+                    ),
+                )
+                Spacer(Modifier.height(10.dp))
+                myWordData?.posDataList?.forEach { posData ->
+                    Text(
+                        text = "Part of Speech: ${posData.pos}",
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 25.sp,
+                            color = Color.Red
+                        ),
+                        modifier = Modifier.padding(2.dp)
+                    )
+                    Text(
+                        text = "Lemma: ${posData.lemma}",
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = Color.Blue
+                        ),
+                        modifier = Modifier.padding(5.dp)
+                    )
+                    posData.synsets.forEach { synset ->
+                        SynsetCard(
+                            synsetNumber,
+                            synset.gloss,
+                            synset.examples,
+                            synset.synonyms,
+                            myWordData?.translationLang,
+                            synset.translations,
+                            synset.antonyms
+                        )
+                        synsetNumber += 1
+                    }
+                    synsetNumber = 1
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+            }
+        } else if (
+            myWordData != null &&
+            myWordData!!.posDataList.isEmpty()
+        ) {
+            Text(text = "word not found !!")
+        }
+        else if(isLoading) {
+            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+        }
+    }
+}
+```
+
+
+
