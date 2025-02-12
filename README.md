@@ -262,7 +262,7 @@ Synset data class content : ['$stable', '<init>', '__call__', '__class__', '__de
 
 ### Content
 Modify MainActivity.kt
-```
+``` kotlin
 class MainActivity : ComponentActivity() {
     private lateinit var wnModule: PyObject
 
