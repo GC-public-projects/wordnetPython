@@ -167,7 +167,7 @@ The path is sent to the python function from the Kotlin code when `initPath` is 
 
 
 ## 1. call of Wordnet library
-Python function that returns a Java/Kotlin `WordData` object that contents all the data needed for a specific word. the hierarchy returned by the python code if the same than the one of our data classes of course.
+Python function that returns a Java/Kotlin `WordData` object that contents all the data needed for a specific word. the hierarchy returned by the python code is the same than the one of our data classes of course.
 
 ### Content
 - In `python` folder create .py file named : `wn.py`
