@@ -173,6 +173,8 @@ Python function that returns a Java/Kotlin `WordData` object that contents all t
 - In `python` folder create .py file named : `wn.py`
 
 ``` python
+# dataclasses names, paths and project name used for the import should strictly follow the Android project implementations 
+
 from com.example.wordnetpython.dataclasses import WordData
 from com.example.wordnetpython.dataclasses import POSData
 from com.example.wordnetpython.dataclasses import SynsetData
