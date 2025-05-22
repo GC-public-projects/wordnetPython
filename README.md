@@ -51,18 +51,29 @@ plugins {
 
 In build.gradle.kts (app) add : 
 ``` kotlin
-plugins {
+plugins { // to sync before
     ...
     id("com.chaquo.python")
 }
 
-chaquopy {
+chaquopy { // to sync after
     defaultConfig {
        version = "3.10"
         pip { }
     }
     productFlavors { }
     sourceSets { }
+}
+
+android { // to sync before
+    ...
+    defaultConfig {
+        ...
+        ndk {
+            // On Apple silicon, you can omit x86_64.
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+    }
 }
 ```
 
